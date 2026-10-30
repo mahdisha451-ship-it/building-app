@@ -44,7 +44,7 @@ const send=(r,c,o,t='application/json; charset=utf-8')=>{r.writeHead(c,{'Content
 http.createServer((q,r)=>{
  const url=q.url.split('?')[0];
  const ST={'/':['index.html','text/html; charset=utf-8'],'/index.html':['index.html','text/html; charset=utf-8'],'/manifest.json':['manifest.json','application/manifest+json'],'/sw.js':['sw.js','text/javascript'],'/icon-192.png':['icon-192.png','image/png'],'/icon-512.png':['icon-512.png','image/png']};
- if(q.method==='GET'&&ST[url])return send(r,200,fs.readFileSync(path.join(__dirname,ST[url][0])),ST[url][1]);
+ if(q.method==='GET'&&ST[url])return send(r,200,fs.readFileSync(path.join(__dirname,ST[url][0]),'utf8'),ST[url][1]);
  if(!url.startsWith('/api/'))return send(r,404,{e:'not found'});
  const user=D.sess[q.headers.authorization]&&D.users[D.sess[q.headers.authorization]];
  if(q.method==='GET'&&url==='/api/state')return user&&user.status==='active'?send(r,200,view(user)):send(r,401,{e:'نیاز به ورود'});
