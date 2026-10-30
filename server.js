@@ -40,11 +40,11 @@ const view=u=>{const m=u.role==='manager',pub=x=>({id:x.id,n:x.n,f:x.f,un:x.un,r
   reqs:m?D.reqs:D.reqs.filter(x=>x.u===u.id),pays:m?D.pays:D.pays.filter(x=>x.u===u.id),
   guests:m?D.guests:D.guests.filter(x=>x.u===u.id),
   polls:D.polls.map(p=>({id:p.id,q:p.q,o:p.o,open:p.open,c:p.o.map((_,i)=>Object.values(p.v).filter(v=>v===i).length),my:p.v[u.id]}))}};
-const send=(r,c,o,t='application/json; charset=utf-8')=>{r.writeHead(c,{'Content-Type':t,'Cache-Control':'no-store'});r.end(typeof o==='string'?o:JSON.stringify(o))};
+const send=(r,c,o,t='application/json; charset=utf-8')=>{r.writeHead(c,{'Content-Type':t,'Cache-Control':'no-store'});r.end(Buffer.isBuffer(o)||typeof o==='string'?o:JSON.stringify(o))};
 http.createServer((q,r)=>{
  const url=q.url.split('?')[0];
  const ST={'/':['index.html','text/html; charset=utf-8'],'/index.html':['index.html','text/html; charset=utf-8'],'/manifest.json':['manifest.json','application/manifest+json'],'/sw.js':['sw.js','text/javascript'],'/icon-192.png':['icon-192.png','image/png'],'/icon-512.png':['icon-512.png','image/png']};
- if(q.method==='GET'&&ST[url])return send(r,200,fs.readFileSync(path.join(__dirname,ST[url][0]),'utf8'),ST[url][1]);
+ if(q.method==='GET'&&ST[url])return send(r,200,fs.readFileSync(path.join(__dirname,ST[url][0])),ST[url][1]);
  if(!url.startsWith('/api/'))return send(r,404,{e:'not found'});
  const user=D.sess[q.headers.authorization]&&D.users[D.sess[q.headers.authorization]];
  if(q.method==='GET'&&url==='/api/state')return user&&user.status==='active'?send(r,200,view(user)):send(r,401,{e:'نیاز به ورود'});
