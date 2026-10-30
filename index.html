@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e"><link rel="manifest" href="/manifest.json"><link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/icon-192.png"><title>مدیریت ساختمان</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--tx:#14202b;--mu:#64748b;--pr:#0f766e;--bd:#e2e8f0;--me:#ccfbf1}
+@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--card:#1e293b;--tx:#e2e8f0;--mu:#94a3b8;--bd:#334155;--me:#134e4a}}
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:76px}
+.top{background:var(--pr);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+main{padding:12px;max-width:600px;margin:auto}.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+input,select,textarea,button{font:inherit;width:100%;padding:10px;margin:4px 0;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx)}
+button{background:var(--pr);color:#fff;border:0;cursor:pointer}button.s{background:none;color:var(--pr);border:1px solid var(--pr)}button.d{background:#b91c1c}
+button.x{width:auto;padding:4px 10px;margin:0}nav{position:fixed;bottom:0;right:0;left:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{background:none;color:var(--mu);border-radius:0;margin:0;font-size:12px;padding:10px 2px}nav button.a{color:var(--pr);font-weight:bold}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid var(--bd);padding:6px 0}.row:first-of-type{border:0}.mu{color:var(--mu);font-size:12px}
+.m{max-width:82%;padding:8px 10px;border-radius:12px;margin:6px 0;background:var(--card);border:1px solid var(--bd)}.m.me{background:var(--me);margin-right:auto}
+#msgs{height:52vh;overflow-y:auto}.b{background:var(--pr);color:#fff;border-radius:6px;padding:1px 8px;font-size:11px}.w{background:#d97706}h4{margin:8px 0 4px}.bar{height:8px;background:var(--pr);border-radius:4px}
+</style></head><body><div id="app"></div>
+<script>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fa=n=>Math.round(Number(n||0)).toLocaleString('fa-IR'),dt=t=>new Date(t).toLocaleDateString('fa-IR');
+const CATS=['برق','گاز','آب','شارژ ساختمان','شستشو و نظافت','آسانسور و تعمیرات','سایر هزینه‌ها'];
+let T=localStorage.getItem('t'),st=null,tab='home',msg='',sig='';
+async function api(p,b){const r=await fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Authorization:T||''},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401&&T)out(true);throw new Error(j.e||'خطا')}return j}
+const act=async(a,b={})=>{try{await api('/api/act',{...b,k:a});await poll(1)}catch(e){alert(e.message)}};
+const M=()=>st.me.role==='manager',v=i=>$('#'+i).value;
+async function poll(f){if(!T)return;try{const j=await api('/api/state');const s=JSON.stringify(j);if(!f&&s===sig)return;sig=s;st=j;draw()}catch(e){}}
+function draw(){const a=document.activeElement,typing=a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);
+ if(!st){$('#app').innerHTML=auth();return}
+ if(typing&&tab==='chat'){const m=$('#msgs');if(m){m.innerHTML=msgs();m.scrollTop=m.scrollHeight}return}
+ if(typing)return;
+ $('#app').innerHTML=shell();const m=$('#msgs');if(m)m.scrollTop=m.scrollHeight}
+const auth=()=>`<div class="top">🏢 مدیریت ساختمان</div><main><div class="c"><b>ورود</b><input id="lu" placeholder="نام کاربری"><input id="lp" type="password" placeholder="رمز عبور"><button onclick="login()">ورود</button></div>
+<div class="c"><b>ثبت‌نام ساکن</b><input id="rn" placeholder="نام و نام خانوادگی"><div style="display:flex;gap:6px"><input id="rf" placeholder="طبقه"><input id="ru" placeholder="واحد"></div><input id="rph" type="tel" placeholder="تلفن (اختیاری)"><input id="rid" placeholder="نام کاربری (انگلیسی)"><input id="rp" type="password" placeholder="رمز (حداقل ۶ کاراکتر)"><button onclick="reg()">ثبت‌نام</button><div class="mu">اولین ثبت‌نام‌کننده، مدیر می‌شود. بقیه پس از تأیید مدیر وارد می‌شوند.</div></div><div style="color:#b91c1c">${E(msg)}</div></main>`;
+async function login(){try{const j=await api('/api/login',{u:v('lu'),p:v('lp')});T=j.token;localStorage.setItem('t',T);msg='';await poll(1)}catch(e){msg=e.message;draw()}}
+async function reg(){try{const j=await api('/api/register',{n:v('rn'),f:v('rf'),un:v('ru'),ph:v('rph'),u:v('rid'),p:v('rp')});msg=j.msg}catch(e){msg=e.message}draw()}
+function out(q){if(!q)api('/api/logout',{}).catch(()=>{});T=null;st=null;sig='';localStorage.removeItem('t');draw()}
+const tot=()=>st.expenses.reduce((s,e)=>s+e.a,0),act_=()=>st.users.filter(u=>u.status===undefined||u.status==='active'),share=()=>tot()/Math.max(1,act_().length),paid=id=>st.pays.filter(p=>p.u===id).reduce((s,p)=>s+p.a,0);
+function shell(){const pend=M()?st.users.filter(u=>u.status==='pending').length:0;
+ const N=[['home','🏠','خانه'],['exp','💰','هزینه‌ها'],['chat','💬','گفتگو'],['more','🛠️','خدمات']];if(M())N.push(['res','👥','ساکنین'+(pend?` (${pend})`:'')]);
+ return `<div class="top"><div>🏢 ${E(st.bname||'ساختمان من')}<br><small>${E(st.me.n)} · طبقه ${E(st.me.f)} واحد ${E(st.me.un)} ${M()?'· مدیر':''}</small></div><button class="s x" style="color:#fff;border-color:#fff" onclick="out()">خروج</button></div>
+<main>${{home,exp:expV,chat:chatV,more:moreV,res:resV}[tab]()}</main><nav>${N.map(n=>`<button class="${tab===n[0]?'a':''}" onclick="tab='${n[0]}';draw()">${n[1]}<br>${n[2]}</button>`).join('')}</nav>`}
+function home(){const me=st.me,b=share()-paid(me.id);
+ return `${M()?`<div class="c"><b>نام ساختمان (فقط مدیر)</b><input id="bn" value="${E(st.bname)}" placeholder="مثلاً: برج آسمان"><button onclick="act('setName',{name:v('bn')})">ذخیره</button></div>`:''}
+<div class="c"><b>وضعیت مالی شما</b><div class="row"><span>سهم از کل هزینه‌ها</span><span>${fa(share())}</span></div><div class="row"><span>پرداختی</span><span>${fa(paid(me.id))}</span></div><div class="row"><b>${b>0?'بدهکار':'تسویه/بستانکار'}</b><b>${fa(Math.abs(b))} تومان</b></div></div>
+<div class="c"><b>📢 اطلاعیه‌ها</b>${M()?`<textarea id="nt" rows="2" placeholder="متن اطلاعیه"></textarea><button onclick="act('addNotice',{x:v('nt')})">انتشار</button>`:''}
+${st.notices.map(x=>`<div class="row"><div><div class="mu">${dt(x.t)}</div>${E(x.x)}</div>${M()?`<button class="d x" onclick="act('delNotice',{id:'${x.id}'})">×</button>`:''}</div>`).join('')||'<div class="mu">اطلاعیه‌ای نیست.</div>'}</div>
+<div class="c"><b>تغییر رمز</b><input id="np" type="password" placeholder="رمز جدید"><button class="s" onclick="act('changePw',{p:v('np')})">تغییر</button></div>`}
+function expV(){const by={};st.expenses.forEach(e=>by[e.c]=(by[e.c]||0)+e.a);
+ return `${M()?`<div class="c"><b>ثبت هزینه</b><select id="ec">${CATS.map(c=>`<option>${c}</option>`).join('')}</select><input id="ea" type="number" placeholder="مبلغ (تومان)"><input id="en" placeholder="توضیحات"><button onclick="act('addExp',{c:v('ec'),a:v('ea'),n:v('en')})">ثبت</button></div>`:''}
+<div class="c"><b>جمع به تفکیک</b>${CATS.map(c=>`<div class="row"><span>${c}</span><span>${fa(by[c])}</span></div>`).join('')}<div class="row"><b>مجموع</b><b>${fa(tot())}</b></div></div>
+${M()?`<div class="c"><b>حساب واحدها (سهم هر واحد ${fa(share())})</b>${act_().map(u=>{const b=share()-paid(u.id);return `<div class="row"><div>${E(u.n)}<div class="mu">طبقه ${E(u.f)} واحد ${E(u.un)} · پرداختی ${fa(paid(u.id))}</div></div><div>${b>0?'بدهکار':'تسویه'} ${fa(Math.abs(b))}<br><button class="x" onclick="pay('${u.id}')">ثبت پرداخت</button></div></div>`}).join('')}</div>`:`<div class="c"><b>پرداخت‌های من</b>${st.pays.map(p=>`<div class="row"><span>${dt(p.t)} ${E(p.n)}</span><span>${fa(p.a)}</span></div>`).join('')||'<div class="mu">پرداختی ثبت نشده.</div>'}</div>`}
+<div class="c"><b>فهرست هزینه‌ها</b>${st.expenses.map(e=>`<div class="row"><div><span class="b">${E(e.c)}</span> ${E(e.n)}<div class="mu">${dt(e.t)}</div></div><div>${fa(e.a)} ${M()?`<button class="d x" onclick="act('delExp',{id:'${e.id}'})">×</button>`:''}</div></div>`).join('')||'<div class="mu">هزینه‌ای نیست.</div>'}</div>`}
+function pay(u){const a=prompt('مبلغ پرداخت (تومان):');if(a)act('addPay',{u,a,n:prompt('توضیح (اختیاری):')||''})}
+const msgs=()=>st.chat.map(m=>`<div class="m ${m.u===st.me.id?'me':''}"><div class="mu">${E(m.n)} · طبقه ${E(m.f)}</div>${E(m.x)}</div>`).join('')||'<div class="mu">اولین پیام را بفرستید.</div>';
+const chatV=()=>`<div class="c"><div id="msgs">${msgs()}</div><div style="display:flex;gap:6px"><input id="cm" placeholder="پیام..." onkeydown="if(event.key==='Enter')snd()"><button style="width:90px" onclick="snd()">ارسال</button></div></div>`;
+function snd(){const e=$('#cm'),x=e.value.trim();if(x){e.value='';act('chat',{x})}}
+function moreV(){return `<div class="c"><b>🔧 درخواست تعمیر/شکایت</b><input id="qt" placeholder="عنوان (مثلاً نشتی لوله پارکینگ)"><textarea id="qx" rows="2" placeholder="توضیحات"></textarea><button onclick="act('addReq',{t:v('qt'),x:v('qx')})">ارسال</button>
+${st.reqs.map(r=>`<div class="row"><div><b>${E(r.t)}</b> <span class="b ${r.s==='جدید'?'w':''}">${E(r.s)}</span><div class="mu">${E(r.x)}${M()?` · ${E(r.n)} (طبقه ${E(r.f)} واحد ${E(r.un)})`:''}</div></div>${M()?`<select class="x" style="width:90px" onchange="act('reqStatus',{id:'${r.id}',s:this.value})">${['جدید','در حال بررسی','انجام شد','رد شد'].map(s=>`<option ${s===r.s?'selected':''}>${s}</option>`).join('')}</select>`:''}</div>`).join('')}</div>
+<div class="c"><b>🗳️ رأی‌گیری</b>${M()?`<input id="pq" placeholder="سؤال"><textarea id="po" rows="3" placeholder="هر گزینه در یک خط"></textarea><button class="s" onclick="act('addPoll',{q:v('pq'),o:v('po').split('\\n')})">ایجاد</button>`:''}
+${st.polls.map(p=>{const s=p.c.reduce((a,b)=>a+b,0)||1;return `<div class="row" style="display:block"><b>${E(p.q)}</b> ${p.open?'':'<span class="b">بسته</span>'}${p.o.map((o,i)=>`<div onclick="${p.open?`act('vote',{id:'${p.id}',i:${i}})`:''}" style="margin:6px 0">${p.my===i?'✅ ':''}${E(o)} — ${fa(p.c[i])}<div class="bar" style="width:${p.c[i]/s*100}%"></div></div>`).join('')}${M()?`<button class="x s" onclick="act('closePoll',{id:'${p.id}'})">بستن</button> <button class="x d" onclick="act('delPoll',{id:'${p.id}'})">حذف</button>`:''}</div>`}).join('')}</div>
+<div class="c"><b>🚪 ثبت مهمان/ورود</b><input id="gn" placeholder="نام مهمان"><input id="gd" placeholder="تاریخ و ساعت ورود"><input id="gp" placeholder="پلاک خودرو (اختیاری)"><button onclick="act('addGuest',{n:v('gn'),d:v('gd'),p:v('gp')})">ثبت</button>
+${st.guests.map(g=>`<div class="row"><div>${E(g.n)} ${E(g.p)}<div class="mu">${E(g.d)}${M()?` · میزبان: ${E(g.o)} (طبقه ${E(g.f)} واحد ${E(g.un)})`:''}</div></div><button class="d x" onclick="act('delGuest',{id:'${g.id}'})">×</button></div>`).join('')}</div>`}
+function resV(){const P=st.users.filter(u=>u.status==='pending'),R=st.users.filter(u=>u.status!=='pending').sort((a,b)=>(+a.f||0)-(+b.f||0));
+ return `<div class="c"><b>⏳ در انتظار تأیید (${fa(P.length)})</b>${P.map(u=>`<div class="row"><div><b>${E(u.n)}</b><div class="mu">طبقه ${E(u.f)} · واحد ${E(u.un)} · ${E(u.ph)} · @${E(u.id)}</div></div><div><button class="x" onclick="act('userStatus',{id:'${u.id}',s:'active'})">تأیید</button> <button class="d x" onclick="if(confirm('رد شود؟'))act('delUser',{id:'${u.id}'})">رد</button></div></div>`).join('')||'<div class="mu">موردی نیست.</div>'}</div>
+<div class="c"><b>👥 ساکنین (${fa(R.length)})</b>${R.map(u=>`<div class="row"><div><b>${E(u.n)}</b> ${u.role==='manager'?'<span class="b">مدیر</span>':''}${u.status==='off'?' <span class="b w">غیرفعال</span>':''}<div class="mu">طبقه ${E(u.f)} · واحد ${E(u.un)} · ${E(u.ph)} · @${E(u.id)}</div></div>${u.id!==st.me.id?`<div><button class="s x" onclick="act('userStatus',{id:'${u.id}',s:'${u.status==='off'?'active':'off'}'})">${u.status==='off'?'فعال':'غیرفعال'}</button> <button class="s x" onclick="rp('${u.id}')">رمز</button> <button class="d x" onclick="if(confirm('حذف شود؟'))act('delUser',{id:'${u.id}'})">×</button></div>`:''}</div>`).join('')}</div>`}
+function rp(id){const p=prompt('رمز جدید (حداقل ۶ کاراکتر):');if(p)act('resetPw',{id,p})}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+draw();poll(1);setInterval(poll,3000);
+</script></body></html>
